@@ -1,7 +1,7 @@
 <?php
-$baseDir = __DIR__ . '/../data';
+$baseDir = __DIR__ . '/data';
 if (!is_dir($baseDir)) {
-    mkdir($baseDir, 0777, true);
+    @mkdir($baseDir, 0777, true);
 }
 $dsn = 'sqlite:' . $baseDir . '/database.sqlite';
 $pdo = new PDO($dsn);
