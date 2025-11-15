@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de Tareas</title>
+<meta name="description" content="Aplicación de lista de tareas con backend PHP y SQLite">
+<meta name="keywords" content="tareas, todo, PHP, SQLite, React">
+<meta name="ga-measurement-id" content="G-XXXXXXX">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilos.css">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-XXXXXXX');
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script>
+const API_BASE = 'http://localhost:8000/index.php';
+function App() {
+  const [tareas, setTareas] = React.useState([]);
+  const [titulo, setTitulo] = React.useState('');
+  const [query, setQuery] = React.useState('');
+  const [editingId, setEditingId] = React.useState(null);
+  const [editingTitle, setEditingTitle] = React.useState('');
+  const [showSummary, setShowSummary] = React.useState(true);
+  const cargar = React.useCallback(async () => {
+    const r = await fetch(API_BASE);
+    const d = await r.json();
+    setTareas(d);
+  }, []);
+  React.useEffect(() => { cargar(); }, [cargar]);
+  const crear = async (e) => {
+    e.preventDefault();
+    if (!titulo.trim()) return;
+    await fetch(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ titulo }) });
+    setTitulo('');
+    cargar();
+  };
+  const toggle = async (t) => {
+    await fetch(API_BASE, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: t.id, completada: t.completada ? 0 : 1 }) });
+    cargar();
+  };
+  const eliminar = async (id) => {
+    await fetch(API_BASE, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
+    cargar();
+  };
+  const empezarEditar = (t) => {
+    setEditingId(t.id);
+    setEditingTitle(t.titulo);
+  };
+  const cancelarEditar = () => {
+    setEditingId(null);
+    setEditingTitle('');
+  };
+  const guardarEditar = async () => {
+    if (!editingId) return;
+    if (!editingTitle.trim()) return;
+    await fetch(API_BASE, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: editingId, titulo: editingTitle }) });
+    cancelarEditar();
+    cargar();
+  };
+  const filtered = tareas.filter(t => t.titulo.toLowerCase().includes(query.toLowerCase()));
+  const total = tareas.length;
+  const completed = tareas.filter(t => t.completada).length;
+  const pct = total ? Math.round((completed/total)*100) : 0;
+  const goTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  const focusNew = () => document.querySelector('.input') && document.querySelector('.input').focus();
+  const toggleSummaryView = () => setShowSummary(s => !s);
+  const toggleTheme = () => document.body.classList.toggle('dark');
+  return React.createElement('main', { className:'layout' },
+    React.createElement('aside', { className:'sidebar' },
+      React.createElement('button', { type:'button', className:'icon-btn', onClick: goTop, 'aria-label':'Inicio' }, '⌂'),
+      React.createElement('button', { type:'button', className:'icon-btn', onClick: focusNew, 'aria-label':'Tareas' }, '☰'),
+      React.createElement('button', { type:'button', className:'icon-btn', onClick: toggleSummaryView, 'aria-label':'Gráfica' }, '📈'),
+      React.createElement('button', { type:'button', className:'icon-btn', onClick: toggleTheme, 'aria-label':'Ajustes' }, '⚙')
+    ),
+    React.createElement('section', { className:'main' },
+      React.createElement('div', { className:'card' },
+        React.createElement('div', { className:'card-header' },
+          React.createElement('h1', { className:'title' }, 'Lista de Tareas'),
+          React.createElement('input', { className:'search', placeholder:'Buscar tareas', value: query, onChange: e => setQuery(e.target.value) })
+        ),
+        React.createElement('form', { className:'form', onSubmit: crear },
+          React.createElement('input', { className:'input', value: titulo, onChange: e => setTitulo(e.target.value), placeholder:'Nueva tarea', 'aria-label':'Título de la tarea' }),
+          React.createElement('button', { className:'btn', type:'submit' }, 'Añadir')
+        ),
+        React.createElement('ul', { className:'list' },
+          filtered.map(t =>
+            React.createElement('li', { key: t.id, className:'row' },
+              editingId === t.id
+                ? React.createElement(React.Fragment, null,
+                    React.createElement('input', { className:'edit-input', value: editingTitle, onChange: e => setEditingTitle(e.target.value) }),
+                    React.createElement('button', { className:'btn', onClick: guardarEditar }, 'Guardar'),
+                    React.createElement('button', { className:'del', onClick: cancelarEditar }, 'Cancelar')
+                  )
+                : React.createElement(React.Fragment, null,
+                    React.createElement('button', { type:'button', className: t.completada ? 'status done' : 'status pending', onClick: () => toggle(t), role:'switch', 'aria-checked': !!t.completada },
+                      t.completada ? 'Realizado' : 'Pendiente'
+                    ),
+                    React.createElement('span', { className: t.completada ? 'text done' : 'text' }, t.titulo),
+                    React.createElement('button', { type:'button', className:'edit', onClick: () => empezarEditar(t) }, 'Editar'),
+                    React.createElement('button', { type:'button', className:'del', onClick: () => eliminar(t.id), 'aria-label':'Eliminar' }, 'Eliminar')
+                  )
+            )
+          )
+        )
+      )
+    ),
+    React.createElement('aside', { className:'right' },
+      React.createElement('div', { className:'img-card' },
+        React.createElement('img', { src:'https://i.pinimg.com/736x/4f/11/3b/4f113b1021967bbabc905550b763a764.jpg', alt:'' })
+      ),
+      showSummary && React.createElement('div', { className:'summary-card' },
+        React.createElement('div', { className:'summary-top' },
+          React.createElement('div', { className:'summary-title' }, 'Progreso'),
+          React.createElement('div', { className:'summary-amount' }, completed + ' / ' + total)
+        ),
+        React.createElement('div', { className:'progress' },
+          React.createElement('div', { className:'bar', style:{ width: pct + '%' } })
+        ),
+        React.createElement('div', { className:'pct' }, pct + '%')
+      )
+    )
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fundamentos Web</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<section class="contenedor">
+  <h2>Fundamentos</h2>
+  <div class="caja" role="button" tabindex="0">Acción</div>
+  <p>Diseño responsivo con Flexbox y padding.</p>
+  <p>Etiqueta de prioridad: <span id="prio"></span></p>
+  <p>Suma sin 6: <span id="suma"></span></p>
+  </section>
+<footer class="pie">Demo</footer>
+<script>
+function prioridadEtiqueta(p) {
+  switch (p) {
+    case 'alta': return 'Alta';
+    case 'media': return 'Media';
+    case 'baja': return 'Baja';
+    default: return 'Desconocida';
+  }
+}
+function sumarExceptoSeis(n) {
+  let s = 0;
+  for (let i = 1; i <= n; i++) {
+    if (i === 6) continue;
+    s += i;
+  }
+  return s;
+}
+document.getElementById('prio').textContent = prioridadEtiqueta('alta');
+document.getElementById('suma').textContent = sumarExceptoSeis(10);
+</script>
+</body>
+</html>
