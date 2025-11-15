@@ -24,7 +24,9 @@ gtag('config', 'G-XXXXXXX');
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <script>
-const API_BASE = 'http://localhost:8000/index.php';
+const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000/index.php'
+  : 'https://umb-web-taller.onrender.com/index.php';
 function App() {
   const [tareas, setTareas] = React.useState([]);
   const [titulo, setTitulo] = React.useState('');
